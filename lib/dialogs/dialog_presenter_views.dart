@@ -7,15 +7,16 @@ part of 'dialog_presenter.dart';
 Future<void> _showMessageDialog(
   BuildContext context,
   MessageDialogRequest request,
+  ValueChanged<Route<dynamic>> onRoute,
 ) {
-  return showDialog<void>(
+  return _showPresentedDialog(
     context: context,
-    barrierDismissible: false,
+    onRoute: onRoute,
     builder: (dialogContext) => PopScope(
       canPop: request.canPop,
       child: AlertDialog(
         title: request.title == null ? null : Text(request.title!),
-        content: Text(request.message),
+        content: request.content ?? Text(request.message),
         actions: [
           for (final action in request.actions)
             TextButton(
@@ -37,11 +38,12 @@ Future<void> _showMessageDialog(
 Future<void> _showErrorDialog(
   BuildContext context,
   ErrorDialogRequest request,
+  ValueChanged<Route<dynamic>> onRoute,
 ) {
   final onRetry = request.onRetry;
-  return showDialog<void>(
+  return _showPresentedDialog(
     context: context,
-    barrierDismissible: false,
+    onRoute: onRoute,
     builder: (dialogContext) => PopScope(
       // 端末の戻る操作では閉じさせず、ボタンを選ばせる
       canPop: false,
@@ -76,10 +78,11 @@ Future<void> _showErrorDialog(
 Future<void> _showForceUpdateDialog(
   BuildContext context,
   ForceUpdateDialogRequest request,
+  ValueChanged<Route<dynamic>> onRoute,
 ) {
-  return showDialog<void>(
+  return _showPresentedDialog(
     context: context,
-    barrierDismissible: false,
+    onRoute: onRoute,
     builder: (dialogContext) => PopScope(
       canPop: false,
       child: AlertDialog(
@@ -92,4 +95,44 @@ Future<void> _showForceUpdateDialog(
       ),
     ),
   );
+}
+
+/// Presenter から出すダイアログの共通部分。
+///
+/// [onRoute] には表示した route を渡す。blocking の依頼が来たときに
+/// DialogPresenter が表示中のダイアログを取り除くために使う。
+Future<void> _showPresentedDialog({
+  required BuildContext context,
+  required ValueChanged<Route<dynamic>> onRoute,
+  required WidgetBuilder builder,
+}) {
+  return showDialog<void>(
+    context: context,
+    barrierDismissible: false,
+    builder: (dialogContext) =>
+        _RouteReporter(onRoute: onRoute, child: builder(dialogContext)),
+  );
+}
+
+/// 自分を表示している route を [onRoute] で知らせる
+class _RouteReporter extends StatefulWidget {
+  const _RouteReporter({required this.onRoute, required this.child});
+
+  final ValueChanged<Route<dynamic>> onRoute;
+  final Widget child;
+
+  @override
+  State<_RouteReporter> createState() => _RouteReporterState();
+}
+
+class _RouteReporterState extends State<_RouteReporter> {
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route != null) widget.onRoute(route);
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }

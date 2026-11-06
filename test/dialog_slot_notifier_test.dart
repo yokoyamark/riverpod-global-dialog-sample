@@ -60,4 +60,34 @@ void main() {
     slot().dismiss('other');
     expect(current()?.key, 'a');
   });
+
+  // 先に起きた失敗のほうが根本原因であることが多い
+  test('critical 同士は来た順に出す', () {
+    slot()
+      ..request(info('pending'))
+      ..request(info('first', priority: DialogPriority.critical))
+      ..request(info('second', priority: DialogPriority.critical));
+
+    expect(current()?.key, 'first');
+    slot().dismiss('first');
+    expect(current()?.key, 'second');
+    slot().dismiss('second');
+    expect(current()?.key, 'pending');
+  });
+
+  test('待ち列にある依頼と同じキーの依頼は積み増さない', () {
+    slot()
+      ..request(info('load'))
+      ..request(info('unauthorized', priority: DialogPriority.critical));
+    // load は待ち列にいるので、critical でも積み増さない
+    expect(
+      slot().request(info('load', priority: DialogPriority.critical)),
+      isTrue,
+    );
+
+    slot().dismiss('unauthorized');
+    expect(current()?.key, 'load');
+    slot().dismiss('load');
+    expect(current(), isNull);
+  });
 }

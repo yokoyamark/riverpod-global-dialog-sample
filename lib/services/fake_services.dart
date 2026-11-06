@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../dialogs/dialog_request.dart';
@@ -70,5 +73,35 @@ class AppVersionService {
             },
           ),
         );
+  }
+
+  static const countdownDialogKey = 'app.forceUpdateCountdown';
+
+  /// [seconds] 秒数えてから強制アップデートを出す。
+  ///
+  /// 数えている間は normal のダイアログを出しておく。blocking が来ると、
+  /// 表示中のダイアログは閉じられるのを待たずに取り除かれる。
+  void scheduleForceUpdate({int seconds = 5}) {
+    final remaining = ValueNotifier(seconds);
+    final requested = _ref
+        .read(dialogSlotProvider.notifier)
+        .request(
+          MessageDialogRequest.info(
+            key: countdownDialogKey,
+            message: '',
+            content: ValueListenableBuilder(
+              valueListenable: remaining,
+              builder: (context, value, _) => Text('$value 秒後に強制アップデートが来ます'),
+            ),
+          ),
+        );
+    if (!requested) return;
+
+    Timer.periodic(const Duration(seconds: 1), (timer) {
+      remaining.value--;
+      if (remaining.value > 0) return;
+      timer.cancel();
+      onForceUpdateRequired();
+    });
   }
 }

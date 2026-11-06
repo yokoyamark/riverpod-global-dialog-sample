@@ -66,6 +66,7 @@ void main() {
   testWidgets('依頼した画面を閉じてもダイアログは出る', (tester) async {
     await pumpApp(tester);
 
+    await tester.scrollUntilVisible(find.text('詳細画面へ'), 100);
     await tester.tap(find.text('詳細画面へ'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('保存して戻る'));
@@ -98,5 +99,65 @@ void main() {
     await tester.tap(find.text('リトライ'));
     await tester.pumpAndSettle();
     expect(find.text('2 回目'), findsOneWidget);
+  });
+
+  testWidgets('critical でも表示中のダイアログは押しのけない', (tester) async {
+    await pumpApp(tester);
+
+    request(MessageDialogRequest.info(key: 'a', message: 'A'));
+    await tester.pumpAndSettle();
+    request(
+      MessageDialogRequest.info(
+        key: 'b',
+        message: 'B',
+        priority: DialogPriority.critical,
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('A'), findsOneWidget);
+    expect(find.text('B'), findsNothing);
+  });
+
+  // 強制アップデートはアプリを使わせないのが目的なので、閉じられるのを待たない
+  testWidgets('blocking は表示中のダイアログを取り除いて出す', (tester) async {
+    await pumpApp(tester);
+
+    var closed = false;
+    request(
+      MessageDialogRequest.info(
+        key: 'a',
+        message: 'A',
+        onClose: () => closed = true,
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('A'), findsOneWidget);
+
+    request(
+      ForceUpdateDialogRequest(key: 'force', message: 'FORCE', onUpdate: () {}),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('A'), findsNothing);
+    expect(find.text('FORCE'), findsOneWidget);
+    // ボタンが押されたわけではないので、コールバックは呼ばない
+    expect(closed, isFalse);
+  });
+
+  testWidgets('カウントダウンのあと、表示中のダイアログが強制アップデートに置き換わる', (tester) async {
+    await pumpApp(tester);
+
+    await tester.scrollUntilVisible(find.text('強制アップデート（5秒後）'), 100);
+    await tester.tap(find.text('強制アップデート（5秒後）'));
+    await tester.pumpAndSettle();
+    expect(find.text('5 秒後に強制アップデートが来ます'), findsOneWidget);
+
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.text('4 秒後に強制アップデートが来ます'), findsOneWidget);
+
+    await tester.pump(const Duration(seconds: 4));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('秒後に強制アップデート'), findsNothing);
+    expect(find.text('アップデートが必要です'), findsOneWidget);
   });
 }

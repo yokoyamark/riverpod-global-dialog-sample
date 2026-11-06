@@ -123,6 +123,12 @@ class HomePage extends ConsumerWidget {
                 ref.read(appVersionServiceProvider).onForceUpdateRequired(),
           ),
           _DemoTile(
+            title: '強制アップデート（5秒後）',
+            subtitle: '表示中の normal ダイアログを取り除いて blocking が出る',
+            onTap: () =>
+                ref.read(appVersionServiceProvider).scheduleForceUpdate(),
+          ),
+          _DemoTile(
             title: '詳細画面へ',
             subtitle: '依頼した画面が消えてもダイアログは出る',
             onTap: () => context.go('/detail'),

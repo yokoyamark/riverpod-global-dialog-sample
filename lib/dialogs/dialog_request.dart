@@ -53,6 +53,7 @@ final class MessageDialogRequest extends DialogRequest {
     required this.message,
     required this.actions,
     this.title,
+    this.content,
     this.canPop = true,
     super.priority,
   });
@@ -83,6 +84,7 @@ final class MessageDialogRequest extends DialogRequest {
     required String key,
     required String message,
     String? title,
+    Widget? content,
     VoidCallback? onClose,
     DialogPriority priority = DialogPriority.normal,
   }) {
@@ -90,6 +92,7 @@ final class MessageDialogRequest extends DialogRequest {
       key: key,
       title: title,
       message: message,
+      content: content,
       priority: priority,
       actions: [DialogAction(label: '閉じる', onPressed: onClose)],
     );
@@ -97,6 +100,9 @@ final class MessageDialogRequest extends DialogRequest {
 
   final String? title;
   final String message;
+
+  /// [message] の代わりに出す本文。カウントダウンなど、表示中に変わる本文に使う
+  final Widget? content;
 
   /// 左から順に並べる
   final List<DialogAction> actions;
