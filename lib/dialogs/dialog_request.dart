@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 /// 保留中の依頼をどこまで押しのけるか。
 enum DialogPriority {
-  /// 先着を優先する。枠が埋まっていれば捨てられる
+  /// 割り込まず、来た順に待つ
   normal,
 
   /// 保留中の依頼を押しのける（セッション切れなど放置できないもの）

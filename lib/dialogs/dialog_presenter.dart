@@ -68,8 +68,9 @@ class _DialogPresenterState extends ConsumerState<DialogPresenter> {
 
         final navigatorContext = rootNavigatorKey.currentContext;
         if (navigatorContext == null || !navigatorContext.mounted) {
-          // Navigator がまだ無い。枠が埋まったままだと state が変わらず
-          // listen も呼ばれないので、少し待って自分で出し直す
+          // Navigator がまだ無い。枠が埋まっている間に来た依頼は待ち列に
+          // 入るだけで state が変わらず listen も呼ばれないので、少し待って
+          // 自分で出し直す
           _retryTimer?.cancel();
           _retryTimer = Timer(_navigatorPollInterval, () {
             if (mounted) unawaited(_pump());

@@ -83,7 +83,7 @@ class AppVersionService {
   /// 表示中のダイアログは閉じられるのを待たずに取り除かれる。
   void scheduleForceUpdate({int seconds = 5}) {
     final remaining = ValueNotifier(seconds);
-    final requested = _ref
+    _ref
         .read(dialogSlotProvider.notifier)
         .request(
           MessageDialogRequest.info(
@@ -95,8 +95,6 @@ class AppVersionService {
             ),
           ),
         );
-    if (!requested) return;
-
     Timer.periodic(const Duration(seconds: 1), (timer) {
       remaining.value--;
       if (remaining.value > 0) return;

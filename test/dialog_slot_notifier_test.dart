@@ -16,49 +16,41 @@ void main() {
   setUp(() => container = ProviderContainer());
   tearDown(() => container.dispose());
 
-  test('normal は先着優先で、後から来たものは捨てる', () {
-    expect(slot().request(info('a')), isTrue);
-    expect(slot().request(info('b')), isFalse);
+  // 注意のあとに続くエラーのように、別の原因の依頼を取りこぼさない
+  test('枠が埋まっているときは待ち列に積み、先着から順に出す', () {
+    slot()
+      ..request(info('a'))
+      ..request(info('b'));
+
     expect(current()?.key, 'a');
-  });
-
-  test('同じ key は積み増さないが、表示されるので true', () {
-    final first = info('a');
-    slot().request(first);
-    expect(slot().request(info('a')), isTrue);
-    expect(current(), same(first));
-  });
-
-  test('critical は保留中の依頼を押しのけ、取り下げ後に押しのけた依頼を出す', () {
-    slot().request(info('a'));
-    expect(
-      slot().request(info('b', priority: DialogPriority.critical)),
-      isTrue,
-    );
+    slot().dismiss('a');
     expect(current()?.key, 'b');
-
     slot().dismiss('b');
-    expect(current()?.key, 'a');
+    expect(current(), isNull);
+  });
+
+  test('同じ key は積み増さない', () {
+    final first = info('a');
+    slot()
+      ..request(first)
+      ..request(info('a'));
+
+    expect(current(), same(first));
     slot().dismiss('a');
     expect(current(), isNull);
   });
 
-  test('blocking のあとはどの依頼も受け付けず、取り下げもできない', () {
-    slot().request(
-      ForceUpdateDialogRequest(key: 'force', message: '', onUpdate: () {}),
-    );
-    expect(
-      slot().request(info('a', priority: DialogPriority.critical)),
-      isFalse,
-    );
-    slot().dismiss('force');
-    expect(current()?.key, 'force');
-  });
+  test('critical は待っている normal より先に出す', () {
+    slot()
+      ..request(info('first'))
+      ..request(info('waiting'))
+      ..request(info('critical', priority: DialogPriority.critical));
 
-  test('取り下げは、いま入っている依頼と key が一致するときだけ', () {
-    slot().request(info('a'));
-    slot().dismiss('other');
-    expect(current()?.key, 'a');
+    expect(current()?.key, 'critical');
+    slot().dismiss('critical');
+    expect(current()?.key, 'first');
+    slot().dismiss('first');
+    expect(current()?.key, 'waiting');
   });
 
   // 先に起きた失敗のほうが根本原因であることが多い
@@ -78,16 +70,32 @@ void main() {
   test('待ち列にある依頼と同じキーの依頼は積み増さない', () {
     slot()
       ..request(info('load'))
-      ..request(info('unauthorized', priority: DialogPriority.critical));
-    // load は待ち列にいるので、critical でも積み増さない
-    expect(
-      slot().request(info('load', priority: DialogPriority.critical)),
-      isTrue,
-    );
+      ..request(info('unauthorized', priority: DialogPriority.critical))
+      // load は待ち列にいるので、critical でも積み増さない
+      ..request(info('load', priority: DialogPriority.critical));
 
     slot().dismiss('unauthorized');
     expect(current()?.key, 'load');
     slot().dismiss('load');
     expect(current(), isNull);
+  });
+
+  test('blocking のあとはどの依頼も受け付けず、取り下げもできない', () {
+    slot()
+      ..request(info('waiting'))
+      ..request(
+        ForceUpdateDialogRequest(key: 'force', message: '', onUpdate: () {}),
+      )
+      ..request(info('a', priority: DialogPriority.critical));
+
+    expect(current()?.key, 'force');
+    slot().dismiss('force');
+    expect(current()?.key, 'force');
+  });
+
+  test('取り下げは、いま入っている依頼と key が一致するときだけ', () {
+    slot().request(info('a'));
+    slot().dismiss('other');
+    expect(current()?.key, 'a');
   });
 }

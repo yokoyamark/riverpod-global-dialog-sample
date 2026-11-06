@@ -59,18 +59,16 @@ class HomePage extends ConsumerWidget {
           ),
           _DemoTile(
             title: '3件同時に依頼',
-            subtitle: 'normal は先着優先。2件目以降は捨てられる',
+            subtitle: '待ち列に積まれ、来た順に1件ずつ出る',
             onTap: () {
-              final results = [
-                for (var i = 1; i <= 3; i++)
-                  slot.request(
-                    MessageDialogRequest.info(
-                      key: 'home.multi.$i',
-                      message: 'お知らせ $i',
-                    ),
+              for (var i = 1; i <= 3; i++) {
+                slot.request(
+                  MessageDialogRequest.info(
+                    key: 'home.multi.$i',
+                    message: 'お知らせ $i',
                   ),
-              ];
-              showResult('request の戻り値: $results');
+                );
+              }
             },
           ),
           _DemoTile(

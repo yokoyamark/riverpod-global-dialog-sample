@@ -18,9 +18,10 @@ class DialogSlotNotifier extends Notifier<DialogRequest?> {
 
   /// 枠の次に出す依頼。優先度の高い順、同じ優先度なら来た順に並べる。
   ///
-  /// [DialogPriority.critical] に押しのけられた依頼もここに入る。捨てると、
-  /// その依頼の onRetry / onDismiss が呼ばれないまま消える。それが唯一の
-  /// 出口になっている依頼もあるので、枠が空いたら順に出す。
+  /// 枠が埋まっているときに来た依頼と、[DialogPriority.critical] に
+  /// 押しのけられた依頼がここに入る。捨てると、その依頼の onRetry /
+  /// onDismiss が呼ばれないまま消える。それが唯一の出口になっている依頼も
+  /// あるので、枠が空いたら順に出す。
   final List<DialogRequest> _waiting = [];
 
   @override
@@ -28,17 +29,15 @@ class DialogSlotNotifier extends Notifier<DialogRequest?> {
 
   /// 表示を依頼する。
   ///
-  /// 枠が埋まっているときは先着を優先する。同じ [DialogRequest.key] の依頼は
-  /// 同じ原因なので、枠でも待ち列でも積み増さない。[DialogPriority.critical]
-  /// 以上だけが割り込み、critical 同士は来た順に出す（先に起きた失敗のほうが
-  /// 根本原因であることが多いため）。
-  ///
-  /// 表示されるなら true（同じ key の依頼が保留中のときも、そちらが出るので
-  /// true）。捨てたときは false。
-  bool request(DialogRequest request) {
+  /// 枠が埋まっているときは待ち列に積み、先着から順に出す。同じ
+  /// [DialogRequest.key] の依頼は同じ原因なので、枠でも待ち列でも積み増さない。
+  /// [DialogPriority.critical] 以上だけが割り込み、同じ優先度どうしは来た順に
+  /// 出す（先に起きた失敗のほうが根本原因であることが多いため）。
+  /// [DialogPriority.blocking] のあとはどの依頼も捨てる。
+  void request(DialogRequest request) {
     if (_blocked) {
       debugPrint('DialogSlot: blocked, dropped $request');
-      return false;
+      return;
     }
     if (request.priority == DialogPriority.blocking) {
       debugPrint('DialogSlot: blocking $request');
@@ -46,24 +45,19 @@ class DialogSlotNotifier extends Notifier<DialogRequest?> {
       // 以降どれも出さないので、待っている依頼は持っておかない
       _waiting.clear();
       state = request;
-      return true;
+      return;
     }
 
     final current = state;
     if (current == null) {
       state = request;
-      return true;
+      return;
     }
     if (current.key == request.key ||
         _waiting.any((waiting) => waiting.key == request.key)) {
       debugPrint('DialogSlot: duplicated $request');
-      return true;
+      return;
     }
-    if (request.priority == DialogPriority.normal) {
-      debugPrint('DialogSlot: dropped $request (pending $current)');
-      return false;
-    }
-
     // 枠と待ち列をひと続きの列とみなし、自分より優先度の低い依頼の前に入れる
     final queue = [current, ..._waiting];
     final index = queue.indexWhere(
@@ -75,7 +69,6 @@ class DialogSlotNotifier extends Notifier<DialogRequest?> {
     _waiting
       ..clear()
       ..addAll(queue.skip(1));
-    return true;
   }
 
   /// 依頼を取り下げる。

@@ -160,4 +160,18 @@ void main() {
     expect(find.textContaining('秒後に強制アップデート'), findsNothing);
     expect(find.text('アップデートが必要です'), findsOneWidget);
   });
+
+  testWidgets('同時に依頼したダイアログは来た順に1件ずつ出る', (tester) async {
+    await pumpApp(tester);
+
+    await tester.tap(find.text('3件同時に依頼'));
+    for (final expected in ['お知らせ 1', 'お知らせ 2', 'お知らせ 3']) {
+      await tester.pumpAndSettle();
+      expect(find.text(expected), findsOneWidget);
+      expect(find.byType(AlertDialog), findsOneWidget);
+      await tester.tap(find.text('閉じる'));
+    }
+    await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsNothing);
+  });
 }
