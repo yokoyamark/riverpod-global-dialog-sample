@@ -1,0 +1,158 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import '../dialogs/dialog_request.dart';
+import '../dialogs/dialog_slot_notifier.dart';
+import '../services/fake_services.dart';
+
+class HomePage extends ConsumerWidget {
+  const HomePage({super.key});
+
+  static const _loadKey = 'home.load';
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final slot = ref.read(dialogSlotProvider.notifier);
+
+    void showResult(String text) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(text)));
+    }
+
+    Future<void> load() async {
+      try {
+        final body = await ref.read(articleRepositoryProvider).fetch();
+        slot.request(
+          MessageDialogRequest.info(key: _loadKey, message: '読み込めました: $body'),
+        );
+      } on Exception catch (e) {
+        // 失敗したらリトライ付きで依頼する。リトライがまた失敗しても、
+        // 表示に入った時点で枠は空いているので、同じ key でも落とされない
+        slot.request(
+          ErrorDialogRequest(
+            key: _loadKey,
+            title: '読み込みに失敗しました',
+            message: '$e',
+            onRetry: load,
+          ),
+        );
+      }
+    }
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Global Dialog Sample')),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          _DemoTile(
+            title: '確認ダイアログ',
+            subtitle: 'BuildContext を渡さずに依頼する',
+            onTap: () => slot.request(
+              MessageDialogRequest.confirm(
+                key: 'home.confirm',
+                message: '保存しますか？',
+                onOk: () => showResult('OK が押されました'),
+              ),
+            ),
+          ),
+          _DemoTile(
+            title: '3件同時に依頼',
+            subtitle: 'normal は先着優先。2件目以降は捨てられる',
+            onTap: () {
+              final results = [
+                for (var i = 1; i <= 3; i++)
+                  slot.request(
+                    MessageDialogRequest.info(
+                      key: 'home.multi.$i',
+                      message: 'お知らせ $i',
+                    ),
+                  ),
+              ];
+              showResult('request の戻り値: $results');
+            },
+          ),
+          _DemoTile(
+            title: '同じ key で3回依頼',
+            subtitle: '同じ原因なので積み増さない',
+            onTap: () {
+              for (var i = 0; i < 3; i++) {
+                slot.request(
+                  MessageDialogRequest.info(
+                    key: 'home.duplicated',
+                    message: '同じ key の依頼は1件だけ出ます',
+                  ),
+                );
+              }
+            },
+          ),
+          _DemoTile(
+            title: '読み込み（2回失敗してから成功）',
+            subtitle: 'リトライ付きのエラーダイアログ',
+            onTap: () {
+              ref.read(articleRepositoryProvider).failNext(2);
+              load();
+            },
+          ),
+          _DemoTile(
+            title: '割り込み',
+            subtitle: '表示中・保留中のお知らせがある所へ critical が来る',
+            onTap: () async {
+              slot.request(
+                MessageDialogRequest.info(
+                  key: 'home.interrupt.1',
+                  message: 'お知らせ 1（表示中）',
+                ),
+              );
+              // 1件目が表示されて枠が空いてから、次を積む
+              await Future<void>.delayed(const Duration(milliseconds: 500));
+              slot.request(
+                MessageDialogRequest.info(
+                  key: 'home.interrupt.2',
+                  message: 'お知らせ 2（押しのけられて後回しになった）',
+                ),
+              );
+              ref.read(sessionServiceProvider).onUnauthorized();
+            },
+          ),
+          _DemoTile(
+            title: '強制アップデート',
+            subtitle: 'blocking。以降の依頼はすべて捨てられる',
+            onTap: () =>
+                ref.read(appVersionServiceProvider).onForceUpdateRequired(),
+          ),
+          _DemoTile(
+            title: '詳細画面へ',
+            subtitle: '依頼した画面が消えてもダイアログは出る',
+            onTap: () => context.go('/detail'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DemoTile extends StatelessWidget {
+  const _DemoTile({
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: ListTile(
+        title: Text(title),
+        subtitle: Text(subtitle),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: onTap,
+      ),
+    );
+  }
+}
