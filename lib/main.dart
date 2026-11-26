@@ -4,10 +4,24 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'debug/dialog_queue_panel.dart';
 import 'dialogs/dialog_presenter.dart';
+import 'dialogs/dialog_request.dart';
+import 'dialogs/dialog_slot_notifier.dart';
 import 'router.dart';
 
 void main() {
-  runApp(const ProviderScope(child: App()));
+  final container = ProviderContainer();
+  // 起動直後、DialogPresenter も Navigator もまだ無いうちに依頼する例。
+  // DialogPresenter ができたところで拾われて表示される
+  container
+      .read(dialogSlotProvider.notifier)
+      .request(
+        MessageDialogRequest.info(
+          key: 'app.launch',
+          title: '起動時のお知らせ',
+          message: '画面ができる前に依頼したお知らせです。',
+        ),
+      );
+  runApp(UncontrolledProviderScope(container: container, child: const App()));
 }
 
 class App extends StatelessWidget {

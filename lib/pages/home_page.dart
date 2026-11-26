@@ -58,6 +58,22 @@ class HomePage extends ConsumerWidget {
             ),
           ),
           _DemoTile(
+            title: 'ダイアログから次のダイアログ',
+            subtitle: 'OK のコールバックで依頼した完了ダイアログが、閉じたあとに出る',
+            onTap: () => slot.request(
+              MessageDialogRequest.confirm(
+                key: 'home.chain.confirm',
+                message: '保存しますか？',
+                onOk: () => slot.request(
+                  MessageDialogRequest.info(
+                    key: 'home.chain.done',
+                    message: '保存しました',
+                  ),
+                ),
+              ),
+            ),
+          ),
+          _DemoTile(
             title: '3件同時に依頼',
             subtitle: '待ち列に積まれ、来た順に1件ずつ出る',
             onTap: () {
@@ -66,6 +82,28 @@ class HomePage extends ConsumerWidget {
                   MessageDialogRequest.info(
                     key: 'home.multi.$i',
                     message: 'お知らせ $i',
+                  ),
+                );
+              }
+            },
+          ),
+          _DemoTile(
+            title: '優先度の混ざった5件を依頼',
+            subtitle: '待ち列は critical が前、同じ優先度どうしは来た順に並ぶ',
+            onTap: () {
+              const priorities = [
+                DialogPriority.normal,
+                DialogPriority.critical,
+                DialogPriority.normal,
+                DialogPriority.critical,
+                DialogPriority.normal,
+              ];
+              for (final (i, priority) in priorities.indexed) {
+                slot.request(
+                  MessageDialogRequest.info(
+                    key: 'home.mixed.${i + 1}',
+                    message: '${i + 1}件目に依頼（${priority.name}）',
+                    priority: priority,
                   ),
                 );
               }
@@ -130,6 +168,11 @@ class HomePage extends ConsumerWidget {
             title: '詳細画面へ',
             subtitle: '依頼した画面が消えてもダイアログは出る',
             onTap: () => context.go('/detail'),
+          ),
+          _DemoTile(
+            title: '詳細画面2へ',
+            subtitle: 'critical のボタンで画面を閉じても、残りの依頼は出る',
+            onTap: () => context.go('/detail2'),
           ),
         ],
       ),

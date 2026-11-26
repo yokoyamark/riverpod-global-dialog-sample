@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'pages/detail_page.dart';
+import 'pages/detail_page2.dart';
 import 'pages/home_page.dart';
 
 /// DialogPresenter がダイアログを出すのに使う。
@@ -20,6 +21,10 @@ final router = GoRouter(
         GoRoute(
           path: 'detail',
           builder: (context, state) => const DetailPage(),
+        ),
+        GoRoute(
+          path: 'detail2',
+          builder: (context, state) => const DetailPage2(),
         ),
       ],
     ),

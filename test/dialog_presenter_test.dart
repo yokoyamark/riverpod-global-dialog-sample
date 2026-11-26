@@ -174,4 +174,55 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(AlertDialog), findsNothing);
   });
+
+  // 表示前の1イベントループの間に critical が割り込んでも、同じ依頼を2回出さない
+  testWidgets('同時に積んだ critical と normal は優先度順に1回ずつ出る', (tester) async {
+    await pumpApp(tester);
+
+    for (final (key, priority) in [
+      ('n1', DialogPriority.normal),
+      ('c2', DialogPriority.critical),
+      ('n3', DialogPriority.normal),
+      ('c4', DialogPriority.critical),
+      ('n5', DialogPriority.normal),
+    ]) {
+      request(
+        MessageDialogRequest.info(key: key, message: key, priority: priority),
+      );
+    }
+
+    for (final expected in ['c2', 'c4', 'n1', 'n3', 'n5']) {
+      await tester.pumpAndSettle();
+      expect(find.text(expected), findsOneWidget);
+      await tester.tap(find.text('閉じる'));
+    }
+    await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsNothing);
+  });
+
+  // listen は値が変わったときにしか呼ばれないので、DialogPresenter が
+  // できる前から積まれていた依頼を取りこぼさないこと
+  testWidgets('起動前に積まれていた依頼も出る', (tester) async {
+    container = ProviderContainer();
+    addTearDown(container.dispose);
+    request(MessageDialogRequest.info(key: 'boot', message: 'BOOT'));
+
+    router.go('/');
+    await tester.pumpWidget(
+      UncontrolledProviderScope(container: container, child: const App()),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('BOOT'), findsOneWidget);
+  });
+
+  testWidgets('ダイアログのボタンから積んだ依頼は、閉じたあとに出る', (tester) async {
+    await pumpApp(tester);
+
+    await tester.tap(find.text('ダイアログから次のダイアログ'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+    expect(find.text('保存しました'), findsOneWidget);
+    expect(find.byType(AlertDialog), findsOneWidget);
+  });
 }

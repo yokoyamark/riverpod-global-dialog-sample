@@ -38,6 +38,14 @@ class _DialogPresenterState extends ConsumerState<DialogPresenter> {
   static const _navigatorPollInterval = Duration(milliseconds: 100);
 
   @override
+  void initState() {
+    super.initState();
+    // listen は値が変わったときにしか呼ばれないので、この Widget ができる前
+    // （起動直後など）に積まれていた依頼はここで拾う
+    unawaited(_pump());
+  }
+
+  @override
   void dispose() {
     _retryTimer?.cancel();
     super.dispose();
@@ -59,13 +67,17 @@ class _DialogPresenterState extends ConsumerState<DialogPresenter> {
     _showing = true;
     try {
       while (true) {
-        final request = ref.read(dialogSlotProvider);
-        if (request == null) return;
+        if (ref.read(dialogSlotProvider) == null) return;
 
         // 依頼が積まれたのが build 中のことがあるので、その場で route を
         // push せず1イベントループ遅らせる
         await Future<void>.delayed(Duration.zero);
         if (!mounted) return;
+
+        // 待っている間に critical が割り込んで枠の中身が変わっていることが
+        // あるので、出す依頼は待ったあとに読む
+        final request = ref.read(dialogSlotProvider);
+        if (request == null) return;
 
         final navigatorContext = rootNavigatorKey.currentContext;
         if (navigatorContext == null || !navigatorContext.mounted) {
