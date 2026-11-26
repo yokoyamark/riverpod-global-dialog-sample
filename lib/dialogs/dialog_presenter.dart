@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../debug/dialog_queue_snapshot.dart';
 import '../router.dart';
 import 'dialog_request.dart';
 import 'dialog_slot_notifier.dart';
@@ -83,16 +84,23 @@ class _DialogPresenterState extends ConsumerState<DialogPresenter> {
         ref.read(dialogSlotProvider.notifier).dismiss(request.key);
 
         _presented = request;
+        _publishPresented(request);
         try {
           await _show(navigatorContext, request);
         } finally {
           _presented = null;
           _presentedRoute = null;
+          if (mounted) _publishPresented(null);
         }
       }
     } finally {
       _showing = false;
     }
+  }
+
+  /// 【デモ用】可視化パネルに表示中の依頼を写す。ダイアログの仕組みには関係しない
+  void _publishPresented(DialogRequest? request) {
+    ref.read(dialogQueueSnapshotProvider.notifier).updatePresented(request);
   }
 
   void _onRoute(Route<dynamic> route) {

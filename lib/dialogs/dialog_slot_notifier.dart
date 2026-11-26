@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../debug/dialog_queue_snapshot.dart';
 import 'dialog_request.dart';
 
 final dialogSlotProvider = NotifierProvider<DialogSlotNotifier, DialogRequest?>(
@@ -27,6 +28,13 @@ class DialogSlotNotifier extends Notifier<DialogRequest?> {
   @override
   DialogRequest? build() => null;
 
+  /// 【デモ用】可視化パネルに枠と待ち列を写す。ダイアログの仕組みには関係しない
+  void _publishSnapshot() {
+    ref
+        .read(dialogQueueSnapshotProvider.notifier)
+        .updateQueue(slot: state, waiting: _waiting, blocked: _blocked);
+  }
+
   /// 表示を依頼する。
   ///
   /// 枠が埋まっているときは待ち列に積み、先着から順に出す。同じ
@@ -45,12 +53,14 @@ class DialogSlotNotifier extends Notifier<DialogRequest?> {
       // 以降どれも出さないので、待っている依頼は持っておかない
       _waiting.clear();
       state = request;
+      _publishSnapshot();
       return;
     }
 
     final current = state;
     if (current == null) {
       state = request;
+      _publishSnapshot();
       return;
     }
     if (current.key == request.key ||
@@ -69,6 +79,7 @@ class DialogSlotNotifier extends Notifier<DialogRequest?> {
     _waiting
       ..clear()
       ..addAll(queue.skip(1));
+    _publishSnapshot();
   }
 
   /// 依頼を取り下げる。
@@ -80,5 +91,6 @@ class DialogSlotNotifier extends Notifier<DialogRequest?> {
     if (state?.key != key) return;
     // 待っている依頼があれば、それを次に出す
     state = _waiting.isEmpty ? null : _waiting.removeAt(0);
+    _publishSnapshot();
   }
 }
