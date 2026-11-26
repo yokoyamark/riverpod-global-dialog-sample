@@ -31,6 +31,7 @@ class App extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp.router(
       title: 'Global Dialog Sample',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(colorSchemeSeed: Colors.indigo),
       routerConfig: router,
       // 漢字を日本語グリフで描画するためにロケールを固定する（Han 統合対策）
