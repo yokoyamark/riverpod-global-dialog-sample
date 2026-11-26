@@ -99,7 +99,7 @@ Future<void> _showForceUpdateDialog(
 
 /// Presenter から出すダイアログの共通部分。
 ///
-/// [onRoute] には表示した route を渡す。blocking の依頼が来たときに
+/// [onRoute] には表示した route を渡す。blocking の依頼が発生したときに
 /// DialogPresenter が表示中のダイアログを取り除くために使う。
 Future<void> _showPresentedDialog({
   required BuildContext context,

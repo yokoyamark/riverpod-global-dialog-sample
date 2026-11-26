@@ -22,7 +22,7 @@ void main() {
   void request(DialogRequest r) =>
       container.read(dialogSlotProvider.notifier).request(r);
 
-  testWidgets('表示中に来た依頼は、閉じたあとに出る', (tester) async {
+  testWidgets('表示中に発生した依頼は、閉じたあとに出る', (tester) async {
     await pumpApp(tester);
 
     request(MessageDialogRequest.info(key: 'a', message: 'A'));
@@ -150,10 +150,10 @@ void main() {
     await tester.scrollUntilVisible(find.text('強制アップデート（5秒後）'), 100);
     await tester.tap(find.text('強制アップデート（5秒後）'));
     await tester.pumpAndSettle();
-    expect(find.text('5 秒後に強制アップデートが来ます'), findsOneWidget);
+    expect(find.text('5 秒後に強制アップデートが発生します'), findsOneWidget);
 
     await tester.pump(const Duration(seconds: 1));
-    expect(find.text('4 秒後に強制アップデートが来ます'), findsOneWidget);
+    expect(find.text('4 秒後に強制アップデートが発生します'), findsOneWidget);
 
     await tester.pump(const Duration(seconds: 4));
     await tester.pumpAndSettle();
@@ -161,7 +161,7 @@ void main() {
     expect(find.text('アップデートが必要です'), findsOneWidget);
   });
 
-  testWidgets('同時に依頼したダイアログは来た順に1件ずつ出る', (tester) async {
+  testWidgets('同時に依頼したダイアログは発生した順に1件ずつ出る', (tester) async {
     await pumpApp(tester);
 
     await tester.tap(find.text('3件同時に依頼'));

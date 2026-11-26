@@ -17,9 +17,9 @@ class DialogSlotNotifier extends Notifier<DialogRequest?> {
   /// [DialogPriority.blocking] を受けたか。一度立つと以降どの依頼も受け付けない
   bool _blocked = false;
 
-  /// 枠の次に出す依頼。優先度の高い順、同じ優先度なら来た順に並べる。
+  /// 枠の次に出す依頼。優先度の高い順、同じ優先度なら発生した順に並べる。
   ///
-  /// 枠が埋まっているときに来た依頼と、[DialogPriority.critical] に
+  /// 枠が埋まっているときに発生した依頼と、[DialogPriority.critical] に
   /// 押しのけられた依頼がここに入る。捨てると、その依頼の onRetry /
   /// onDismiss が呼ばれないまま消える。それが唯一の出口になっている依頼も
   /// あるので、枠が空いたら順に出す。
@@ -39,7 +39,7 @@ class DialogSlotNotifier extends Notifier<DialogRequest?> {
   ///
   /// 枠が埋まっているときは待ち列に積み、先着から順に出す。同じ
   /// [DialogRequest.key] の依頼は同じ原因なので、枠でも待ち列でも積み増さない。
-  /// [DialogPriority.critical] 以上だけが割り込み、同じ優先度どうしは来た順に
+  /// [DialogPriority.critical] 以上だけが割り込み、同じ優先度どうしは発生した順に
   /// 出す（先に起きた失敗のほうが根本原因であることが多いため）。
   /// [DialogPriority.blocking] のあとはどの依頼も捨てる。
   void request(DialogRequest request) {

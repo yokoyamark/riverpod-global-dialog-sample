@@ -54,7 +54,7 @@ void main() {
   });
 
   // 先に起きた失敗のほうが根本原因であることが多い
-  test('critical 同士は来た順に出す', () {
+  test('critical 同士は発生した順に出す', () {
     slot()
       ..request(info('pending'))
       ..request(info('first', priority: DialogPriority.critical))

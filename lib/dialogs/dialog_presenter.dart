@@ -25,7 +25,7 @@ class DialogPresenter extends ConsumerStatefulWidget {
 }
 
 class _DialogPresenterState extends ConsumerState<DialogPresenter> {
-  /// 表示中に次の依頼が来ても二重に showDialog しないためのフラグ
+  /// 表示中に次の依頼が発生しても二重に showDialog しないためのフラグ
   bool _showing = false;
 
   /// 表示中の依頼と、それを出している route。route は表示されてから知らされる
@@ -81,7 +81,7 @@ class _DialogPresenterState extends ConsumerState<DialogPresenter> {
 
         final navigatorContext = rootNavigatorKey.currentContext;
         if (navigatorContext == null || !navigatorContext.mounted) {
-          // Navigator がまだ無い。枠が埋まっている間に来た依頼は待ち列に
+          // Navigator がまだ無い。枠が埋まっている間に発生した依頼は待ち列に
           // 入るだけで state が変わらず listen も呼ばれないので、少し待って
           // 自分で出し直す
           _retryTimer?.cancel();
@@ -117,7 +117,7 @@ class _DialogPresenterState extends ConsumerState<DialogPresenter> {
 
   void _onRoute(Route<dynamic> route) {
     _presentedRoute = route;
-    // route が知らされる前に blocking が来ていることがある
+    // route が知らされる前に blocking の依頼が発生していることがある
     _schedulePreemption();
   }
 

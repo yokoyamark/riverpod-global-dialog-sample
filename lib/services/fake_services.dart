@@ -79,7 +79,7 @@ class AppVersionService {
 
   /// [seconds] 秒数えてから強制アップデートを出す。
   ///
-  /// 数えている間は normal のダイアログを出しておく。blocking が来ると、
+  /// 数えている間は normal のダイアログを出しておく。blocking の依頼が発生すると、
   /// 表示中のダイアログは閉じられるのを待たずに取り除かれる。
   void scheduleForceUpdate({int seconds = 5}) {
     final remaining = ValueNotifier(seconds);
@@ -91,7 +91,7 @@ class AppVersionService {
             message: '',
             content: ValueListenableBuilder(
               valueListenable: remaining,
-              builder: (context, value, _) => Text('$value 秒後に強制アップデートが来ます'),
+              builder: (context, value, _) => Text('$value 秒後に強制アップデートが発生します'),
             ),
           ),
         );

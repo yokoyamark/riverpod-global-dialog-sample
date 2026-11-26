@@ -75,7 +75,7 @@ class HomePage extends ConsumerWidget {
           ),
           _DemoTile(
             title: '3件同時に依頼',
-            subtitle: '待ち列に積まれ、来た順に1件ずつ出る',
+            subtitle: '待ち列に積まれ、発生した順に1件ずつ出る',
             onTap: () {
               for (var i = 1; i <= 3; i++) {
                 slot.request(
@@ -89,7 +89,7 @@ class HomePage extends ConsumerWidget {
           ),
           _DemoTile(
             title: '優先度の混ざった5件を依頼',
-            subtitle: '待ち列は critical が前、同じ優先度どうしは来た順に並ぶ',
+            subtitle: '待ち列は critical が前、同じ優先度どうしは発生した順に並ぶ',
             onTap: () {
               const priorities = [
                 DialogPriority.normal,
@@ -133,7 +133,7 @@ class HomePage extends ConsumerWidget {
           ),
           _DemoTile(
             title: '割り込み',
-            subtitle: '表示中・保留中のお知らせがある所へ critical が来る',
+            subtitle: '表示中・保留中のお知らせがある所へ critical が発生する',
             onTap: () async {
               slot.request(
                 MessageDialogRequest.info(
