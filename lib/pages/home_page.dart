@@ -4,41 +4,21 @@ import 'package:go_router/go_router.dart';
 
 import '../dialogs/dialog_request.dart';
 import '../dialogs/dialog_slot_notifier.dart';
-import '../services/fake_services.dart';
+import '../data/article_repository.dart';
+import 'home_notifier.dart';
 
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
 
-  static const _loadKey = 'home.load';
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final slot = ref.read(dialogSlotProvider.notifier);
+    final home = ref.read(homeNotifierProvider.notifier);
 
     void showResult(String text) {
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
         ..showSnackBar(SnackBar(content: Text(text)));
-    }
-
-    Future<void> load() async {
-      try {
-        final body = await ref.read(articleRepositoryProvider).fetch();
-        slot.request(
-          MessageDialogRequest.info(key: _loadKey, message: '読み込めました: $body'),
-        );
-      } on Exception catch (e) {
-        // 失敗したらリトライ付きで依頼する。リトライがまた失敗しても、
-        // 表示に入った時点で枠は空いているので、同じ key でも落とされない
-        slot.request(
-          ErrorDialogRequest(
-            key: _loadKey,
-            title: '読み込みに失敗しました',
-            message: '$e',
-            onRetry: load,
-          ),
-        );
-      }
     }
 
     return Scaffold(
@@ -128,7 +108,7 @@ class HomePage extends ConsumerWidget {
             subtitle: 'リトライ付きのエラーダイアログ',
             onTap: () {
               ref.read(articleRepositoryProvider).failNext(2);
-              load();
+              home.load();
             },
           ),
           _DemoTile(
@@ -149,20 +129,18 @@ class HomePage extends ConsumerWidget {
                   message: 'お知らせ 2（押しのけられて後回しになった）',
                 ),
               );
-              ref.read(sessionServiceProvider).onUnauthorized();
+              home.onUnauthorized();
             },
           ),
           _DemoTile(
             title: '強制アップデート',
             subtitle: 'blocking。以降の依頼はすべて捨てられる',
-            onTap: () =>
-                ref.read(appVersionServiceProvider).onForceUpdateRequired(),
+            onTap: home.onForceUpdateRequired,
           ),
           _DemoTile(
             title: '強制アップデート（5秒後）',
             subtitle: '表示中の normal ダイアログを取り除いて blocking が出る',
-            onTap: () =>
-                ref.read(appVersionServiceProvider).scheduleForceUpdate(),
+            onTap: home.scheduleForceUpdate,
           ),
           _DemoTile(
             title: '詳細画面へ',

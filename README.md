@@ -7,7 +7,7 @@ Flutter + Riverpod で、アプリ全体のダイアログを1か所から出す
 - 画面下部のパネルに、表示中・枠・待ち列の中身が出ます（デモ用）。
 - 「強制アップデート」を押したあとは、ページを再読み込みするまでほかの依頼を受け付けません。
 
-- **Producer**: 画面やサービスは `dialogSlotProvider` に「表示の依頼」を積むだけ。`BuildContext` は不要です。
+- **Producer**: Widget や Notifier は `dialogSlotProvider` に「表示の依頼」を積むだけ。`BuildContext` は不要です。
 - **Consumer**: `MaterialApp.router` の `builder`（Router の外）に置いた `DialogPresenter` が、依頼を1件ずつ表示します。
 - **優先度**: 待ち列は優先度の高い順、同じ優先度なら発生した順に並びます。同じ `key` の依頼は枠でも待ち列でも積み増しません。
   - `normal`: 割り込まず、発生した順に待つ
@@ -25,8 +25,8 @@ lib/
 │   ├── dialog_slot_notifier.dart     # 表示枠（キュー）
 │   ├── dialog_presenter.dart         # 依頼を順に表示する Consumer
 │   └── dialog_presenter_views.dart   # ダイアログの見た目
-├── services/fake_services.dart       # UI の外にいる Producer の例
-└── pages/                            # デモ画面
+├── data/article_repository.dart      # 読み込みの Fake
+└── pages/                            # デモ画面。home_notifier.dart が Widget の外にいる Producer の例
 ```
 
 ## 動かす
