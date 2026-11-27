@@ -118,17 +118,21 @@ class HomePage extends ConsumerWidget {
               slot.request(
                 MessageDialogRequest.info(
                   key: 'home.interrupt.1',
-                  message: 'お知らせ 1（表示中）',
+                  message:
+                      'お知らせ 1（表示中）\n\n'
+                      '1秒ごとに、お知らせ 2（normal）とセッション切れ（critical）が'
+                      '積まれます。下のパネルの動きを見てから閉じてください。',
                 ),
               );
-              // 1件目が表示されて枠が空いてから、次を積む
-              await Future<void>.delayed(const Duration(milliseconds: 500));
+              // 1件ずつ間を空けて積み、パネルで枠と待ち列の変化を追えるようにする
+              await Future<void>.delayed(const Duration(seconds: 1));
               slot.request(
                 MessageDialogRequest.info(
                   key: 'home.interrupt.2',
-                  message: 'お知らせ 2（押しのけられて後回しになった）',
+                  message: 'お知らせ 2（critical に押しのけられて後回しになった）',
                 ),
               );
+              await Future<void>.delayed(const Duration(seconds: 1));
               home.onUnauthorized();
             },
           ),
